@@ -22,7 +22,7 @@
 
 # Используемые технологии:
 - [x] Java SE 8
-- [x] Пользовательский интерфейс на [Vaadin 8[(https://vaadin.com)
+- [x] Пользовательский интерфейс на [Vaadin 8](https://vaadin.com)
 - [x] Доступ к данным через JDBC
 - [x] Сервер баз данных: HSQLDB в [in-process режиме](http://hsqldb.org/doc/2.0/guide/running-chapt.html#rgc_inprocess)
 
