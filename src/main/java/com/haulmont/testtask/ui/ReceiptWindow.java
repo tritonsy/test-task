@@ -32,6 +32,7 @@ import com.haulmont.testtask.entity.Patient;
 import com.haulmont.testtask.entity.Receipt;
 import com.vaadin.data.Binder;
 import com.vaadin.data.converter.LocalDateToDateConverter;
+import com.vaadin.server.Page;
 import com.vaadin.ui.*;
 
 import java.time.ZoneId;
@@ -231,30 +232,38 @@ class ReceiptWindow extends Window {
 
         okButton.addClickListener(clickEvent -> {
             if (binder.validate().isOk()) {
-                try {
-                    Receipt receiptToWrite = new Receipt();
-                    receiptToWrite.setDescription(descriptionText.getValue());
-                    receiptToWrite.setPatient(patientComboBox.getValue());
-                    receiptToWrite.setDoctor(doctorComboBox.getValue());
-                    receiptToWrite.setCreationDate(Date.from(creationDateField.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                    receiptToWrite.setExpireDate(Date.from(expireDateField.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                    receiptToWrite.setPriority(priorityComboBox.getValue());
-                    ReceiptDao receiptDao = DaoFactory.getInstance().getReceiptDao();
-                    if (edit) {
-                        try {
-                            receiptDao.update(receipt);
-                        } catch (Exception e) {
-                            logger.severe(e.getMessage());
+                if ((Date.from(creationDateField.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                        .compareTo(Date.from(expireDateField.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant())) > 0) {
+                    Notification notification = new Notification("Дата создания не может быть " +
+                            "позже даты окончания срока годности.");
+                    notification.setDelayMsec(2000);
+                    notification.show(Page.getCurrent());
+                } else {
+                    try {
+                        Receipt receiptToWrite = new Receipt();
+                        receiptToWrite.setDescription(descriptionText.getValue());
+                        receiptToWrite.setPatient(patientComboBox.getValue());
+                        receiptToWrite.setDoctor(doctorComboBox.getValue());
+                        receiptToWrite.setCreationDate(Date.from(creationDateField.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                        receiptToWrite.setExpireDate(Date.from(expireDateField.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                        receiptToWrite.setPriority(priorityComboBox.getValue());
+                        ReceiptDao receiptDao = DaoFactory.getInstance().getReceiptDao();
+                        if (edit) {
+                            try {
+                                receiptDao.update(receipt);
+                            } catch (Exception e) {
+                                logger.severe(e.getMessage());
+                            }
+                        } else {
+                            receiptDao.persist(receiptToWrite);
                         }
-                    } else {
-                        receiptDao.persist(receiptToWrite);
+                        List<Receipt> receipts = DaoFactory.getInstance().getReceiptDao().getAll();
+                        grid.setItems(receipts);
+                    } catch (DaoException e) {
+                        logger.severe(e.getMessage());
                     }
-                    List<Receipt> receipts = DaoFactory.getInstance().getReceiptDao().getAll();
-                    grid.setItems(receipts);
-                } catch (DaoException e) {
-                    logger.severe(e.getMessage());
+                    close();
                 }
-                close();
             }
         });
         cancelButton.addClickListener(clickEvent -> close());
